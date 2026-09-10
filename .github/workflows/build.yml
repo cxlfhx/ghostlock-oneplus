@@ -25,10 +25,9 @@ jobs:
           python3 unpack_bootimg.py --boot_img boot.img --out boot_out
       - name: 提取内核符号表
         run: |
-          wget -q https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux
-          chmod +x extract-vmlinux
-          ./extract-vmlinux boot_out/kernel > vmlinux
-          nm -n vmlinux | grep -E ' [TtDd] ' > kallsyms.txt
+          wget https://raw.githubusercontent.com/marin-m/vmlinux-to-elf/master/kallsyms_extractor.py
+          chmod +x kallsyms_extractor.py
+          python3 kallsyms_extractor.py boot_out/kernel kallsyms.txt
       - name: 生成偏移并编译
         run: |
           python3 tools/extract_target.py --kallsyms kallsyms.txt
