@@ -22,7 +22,7 @@ jobs:
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
           wget https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-21.0/unpack_bootimg.py
           chmod +x unpack_bootimg.py
-          python3 unpack_bootimg.py boot.img --out boot_out
+          python3 unpack_bootimg.py --boot_img boot.img --out boot_out
       - name: 提取内核符号表
         run: |
           wget -q https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux
