@@ -9,13 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 安装基础依赖
+      - name: 安装官方依赖
         run: |
           sudo apt update
           sudo apt install -y build-essential python3 python3-pip zlib1g-dev
-
-      - name: 安装内核转ELF工具
-        run: pip install vmlinux-to-elf
+          pip install vmlinux-to-elf bootimg
 
       - name: 安装NDK编译工具
         uses: Ylarod/setup-ndk-clang@v1
@@ -23,18 +21,20 @@ jobs:
         with:
           ndk-version: r29
 
-      - name: 下载boot.img和官方解包脚本
+      - name: 下载boot.img并提取内核
         run: |
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
-          wget "https://raw.githubusercontent.com/aosp-mirror/platform_system_tools_mkbootimg/main/unpack_bootimg.py" -O unpack_bootimg.py
-          chmod +x unpack_bootimg.py
-
-      - name: 解包boot.img
-        run: python3 unpack_bootimg.py boot.img --out boot_out
+          python3 -c "
+import bootimg
+with open('boot.img', 'rb') as f:
+    img = bootimg.BootImg(f.read())
+with open('kernel', 'wb') as f:
+    f.write(img.kernel)
+          "
 
       - name: 提取内核符号表
         run: |
-          vmlinux-to-elf boot_out/kernel kernel.elf
+          vmlinux-to-elf kernel kernel.elf
           nm -n kernel.elf | grep -E ' [TtDd] ' > kallsyms.txt
 
       - name: 生成偏移并编译
