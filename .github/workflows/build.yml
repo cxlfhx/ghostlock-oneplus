@@ -20,7 +20,7 @@ jobs:
       - name: 下载并解包boot.img
         run: |
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
-          wget https://raw.githubusercontent.com/cfig/bootimg_tools/master/unpack_bootimg.py
+          wget https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-21.0/unpack_bootimg.py
           chmod +x unpack_bootimg.py
           python3 unpack_bootimg.py boot.img --out boot_out
       - name: 提取内核符号表
