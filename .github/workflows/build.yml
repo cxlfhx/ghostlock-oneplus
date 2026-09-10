@@ -8,28 +8,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 安装官方依赖
+
+      - name: 安装基础依赖
         run: |
           sudo apt update
-          sudo apt install -y build-essential python3-pip android-tools-boot
-          pip install vmlinux-to-elf
+          sudo apt install -y build-essential python3 python3-pip zlib1g-dev
+
+      - name: 安装内核转ELF工具
+        run: pip install vmlinux-to-elf
+
       - name: 安装NDK编译工具
         uses: Ylarod/setup-ndk-clang@v1
         id: setup-ndk
         with:
           ndk-version: r29
-      - name: 下载并解包boot.img
+
+      - name: 下载boot.img和官方解包脚本
         run: |
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
-          unpackbootimg -i boot.img -o boot_out
+          wget "https://raw.githubusercontent.com/aosp-mirror/platform_system_tools_mkbootimg/main/unpack_bootimg.py" -O unpack_bootimg.py
+          chmod +x unpack_bootimg.py
+
+      - name: 解包boot.img
+        run: python3 unpack_bootimg.py boot.img --out boot_out
+
       - name: 提取内核符号表
         run: |
           vmlinux-to-elf boot_out/kernel kernel.elf
           nm -n kernel.elf | grep -E ' [TtDd] ' > kallsyms.txt
+
       - name: 生成偏移并编译
         run: |
           python3 tools/extract_target.py --kallsyms kallsyms.txt
           make NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}
+
       - name: 上传成品
         uses: actions/upload-artifact@v4
         with:
