@@ -11,7 +11,7 @@ jobs:
       - name: 安装依赖
         run: |
           sudo apt update
-          sudo apt install -y abootimg build-essential
+          sudo apt install -y build-essential python3
       - name: 安装NDK编译工具
         uses: Ylarod/setup-ndk-clang@v1
         id: setup-ndk
@@ -20,12 +20,14 @@ jobs:
       - name: 下载并解包boot.img
         run: |
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
-          abootimg -x boot.img
+          wget https://raw.githubusercontent.com/cfig/bootimg_tools/master/unpack_bootimg.py
+          chmod +x unpack_bootimg.py
+          python3 unpack_bootimg.py boot.img --out boot_out
       - name: 提取内核符号表
         run: |
           wget -q https://raw.githubusercontent.com/torvalds/linux/master/scripts/extract-vmlinux
           chmod +x extract-vmlinux
-          ./extract-vmlinux zImage > vmlinux
+          ./extract-vmlinux boot_out/kernel > vmlinux
           nm -n vmlinux | grep -E ' [TtDd] ' > kallsyms.txt
       - name: 生成偏移并编译
         run: |
