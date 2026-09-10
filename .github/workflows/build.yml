@@ -8,10 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 安装依赖
+      - name: 安装官方依赖
         run: |
           sudo apt update
-          sudo apt install -y build-essential python3
+          sudo apt install -y build-essential python3-pip android-tools-boot
+          pip install vmlinux-to-elf
       - name: 安装NDK编译工具
         uses: Ylarod/setup-ndk-clang@v1
         id: setup-ndk
@@ -20,14 +21,11 @@ jobs:
       - name: 下载并解包boot.img
         run: |
           wget "https://github.com/cxlfhx/ghostlock-oneplus/releases/download/boot/boot.img" -O boot.img
-          wget https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-21.0/unpack_bootimg.py
-          chmod +x unpack_bootimg.py
-          python3 unpack_bootimg.py --boot_img boot.img --out boot_out
+          unpackbootimg -i boot.img -o boot_out
       - name: 提取内核符号表
         run: |
-          wget https://raw.githubusercontent.com/marin-m/vmlinux-to-elf/master/kallsyms_extractor.py
-          chmod +x kallsyms_extractor.py
-          python3 kallsyms_extractor.py boot_out/kernel kallsyms.txt
+          vmlinux-to-elf boot_out/kernel kernel.elf
+          nm -n kernel.elf | grep -E ' [TtDd] ' > kallsyms.txt
       - name: 生成偏移并编译
         run: |
           python3 tools/extract_target.py --kallsyms kallsyms.txt
